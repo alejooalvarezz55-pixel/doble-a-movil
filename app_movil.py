@@ -2,8 +2,8 @@ import flet as ft
 import psycopg2
 import os
 
-# Tu enlace exacto a Supabase
-DB_URL = "postgresql://postgres.hhttlqfisgqvoevyoqty:Pinares5533@aws-0-us-east-2.pooler.supabase.com:5432/postgres"
+# Lee la URL de la base de datos de forma segura desde las variables de entorno del servidor
+DB_URL = os.environ.get("DB_URL")
 
 def main(page: ft.Page):
     page.title = "DOBLE A - Sistema Integral"
@@ -27,6 +27,12 @@ def main(page: ft.Page):
         if not usuario_input.value or not password_input.value:
             login_status.value = "⚠️ Ingresa usuario y clave"
             login_status.color = "yellow"
+            page.update()
+            return
+
+        if not DB_URL:
+            login_status.value = "🔴 Error: Falta configurar la variable de entorno DB_URL"
+            login_status.color = "red"
             page.update()
             return
 
