@@ -1,63 +1,58 @@
 import flet as ft
-import psycopg2
 import os
 
-# Tu enlace a Supabase (mismo que en la PC)
-DB_URL = "postgresql://postgres.hhttlqfisgqvoevyoqty:Pinares5533@aws-0-us-east-2.pooler.supabase.com:5432/postgres"
-
 def main(page: ft.Page):
-    # Configuración de la ventana del celular
-    page.title = "Doble A - Móvil"
-    page.theme_mode = "dark" 
+    # Configuración principal de la app
+    page.title = "Doble A"
+    page.theme_mode = "dark"
     page.padding = 20
-    page.vertical_alignment = "center"
-    page.horizontal_alignment = "center"
 
-    # Función para probar la conexión
-    def probar_conexion(e):
-        btn_conectar.disabled = True
-        status_text.value = "Conectando a la Nube..."
-        status_text.color = "yellow"
-        page.update()
-
-        try:
-            conn = psycopg2.connect(DB_URL)
-            cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM usuarios_caja")
-            cantidad_usuarios = cursor.fetchone()[0]
-            conn.close()
-            
-            status_text.value = f"☁️ Nube: CONECTADA 🟢\n(Usuarios registrados: {cantidad_usuarios})"
-            status_text.color = "green"
-        except Exception as ex:
-            status_text.value = f"🔴 Error de conexión:\n{ex}"
-            status_text.color = "red"
-            
-        btn_conectar.disabled = False
-        page.update()
-
-    # Elementos de la interfaz
-    logo_texto = ft.Text("🍔 DOBLE A", size=36, weight="bold", color="red")
-    subtitulo = ft.Text("Gestión Móvil en la Nube", size=16, color="grey")
+    # --- DISEÑO DE LAS PANTALLAS (Vistas) ---
     
-    status_text = ft.Text("Esperando conexión...", size=16, text_align="center")
-    
-    btn_conectar = ft.ElevatedButton(
-        "Probar Conexión",
-        icon="cloud",
-        color="white",
-        bgcolor="red",
-        on_click=probar_conexion
+    # 1. Pantalla de CAJA
+    vista_caja = ft.Column([
+        ft.Text("Módulo de Caja 🍔", size=24, weight="bold", color="red"),
+        ft.Text("Aquí irán los botones para cargar ventas, Pedix y cierres de turno.", color="grey"),
+        # Aquí meteremos tu código de la PC después
+    ], visible=True) # <-- Esta es la que se ve al abrir la app
+
+    # 2. Pantalla de GASTOS
+    vista_gastos = ft.Column([
+        ft.Text("Carga de Gastos 💸", size=24, weight="bold", color="green"),
+        ft.Text("Aquí pondremos el formulario para anotar compras de mercadería y gastos fijos.", color="grey"),
+    ], visible=False)
+
+    # 3. Pantalla de STOCK
+    vista_stock = ft.Column([
+        ft.Text("Control de Stock 📦", size=24, weight="bold", color="blue"),
+        ft.Text("Aquí irá el listado de insumos y el botón para marcar faltantes.", color="grey"),
+    ], visible=False)
+
+    # --- LÓGICA DE NAVEGACIÓN ---
+    def cambiar_pestana(e):
+        # e.control.selected_index nos dice qué botón tocó el usuario (0, 1 o 2)
+        index = e.control.selected_index
+        
+        # Mostramos solo la pantalla que coincide con el botón tocado
+        vista_caja.visible = (index == 0)
+        vista_gastos.visible = (index == 1)
+        vista_stock.visible = (index == 2)
+        
+        page.update() # Actualizamos la pantalla
+
+    # --- BARRA INFERIOR (Menú) ---
+    page.navigation_bar = ft.NavigationBar(
+        on_change=cambiar_pestana,
+        destinations=[
+            ft.NavigationDestination(icon="point_of_sale", label="Caja"),
+            ft.NavigationDestination(icon="attach_money", label="Gastos"),
+            ft.NavigationDestination(icon="inventory", label="Stock"),
+        ]
     )
 
-    page.add(
-        logo_texto,
-        subtitulo,
-        ft.Divider(height=40, color="grey"),
-        status_text,
-        ft.Container(height=20),
-        btn_conectar
-    )
+    # Agregamos las tres pantallas a la aplicación
+    page.add(vista_caja, vista_gastos, vista_stock)
+
 
 # Configuración dinámica para servidores en la nube
 puerto = int(os.environ.get("PORT", 8550))
